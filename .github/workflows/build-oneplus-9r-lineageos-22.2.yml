@@ -1,0 +1,92 @@
+name: Build OnePlus 9R LineageOS Kernel with SukiSU-Ultra and SuSFS
+
+on:
+  workflow_dispatch: # 允许你手动点击 "Run workflow" 按钮来触发编译
+
+env:
+  # -------------------【设备信息配置】-------------------
+  DEVICE_NAME : "OnePlus 9R"
+  DEVICE_CODENAME : "lemonades"
+
+  # 内核源码地址和分支 (lineage-21.0 对应 LineageOS 21，请根据你的版本修改)
+  KERNEL_SOURCE : "https://github.com/LineageOS/android_kernel_oneplus_sm8250"
+  KERNEL_BRANCH : "lineage-22.2" # <---【唯一需要你确认和修改的地方】
+
+  # 内核配置文件名
+  DEFCONFIG_NAME : "vendor/sm8250_defconfig"
+
+  # -------------------【SukiSU Ultra 功能配置】-------------------
+  # 关键！启用 SukiSU-Ultra 的集成方法
+  HOOK_METHOD: "syscall"
+
+  # 关键！启用 SukiSU-Ultra 的 KPM (Kernel Patch Module) 功能
+  KPM_ENABLE: "true"
+  KPM_FIX: "true" # 推荐开启以修复编译 KPM 时可能遇到的错误
+
+  # 关闭原版 KernelSU 的自动集成，避免冲突
+  KERNELSU_AUTO_GET : "false"
+
+  # -------------------【SuSFS 功能配置】-------------------
+  SUSFS_ENABLE : true # <--- 已设置为 true，启用 SuSFS
+  SUSFS_FIXED : false # 保持 false，除非你有自定义的 SuSFS 补丁
+  SUSFS_UPDATE : false # 保持 false，通常由 patch-susfs 自动处理版本
+
+  # -------------------【编译器和工具配置 (通常无需修改)】-------------------
+  CUSTOM_CMDS : "CLANG_TRIPLE=aarch64-linux-gnu-"
+  EXTRA_CMDS : "LD=ld.lld LLVM=1 LLVM_IAS=1"
+
+  # 使用最新的 AOSP Clang 编译器
+  CLANG_SOURCE : "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86"
+  CLANG_BRANCH : "main"
+
+  # GCC 设为 false，因为我们主要使用 Clang
+  GCC_GNU : false
+
+  # 打包工具 AnyKernel3 的配置
+  AK3_SOURCE : "https://github.com/osm0sis/AnyKernel3.git"
+  AK3_BRANCH : "master"
+
+  # -------------------【其他高级配置 (保持默认即可)】-------------------
+  NEED_DTBO : false
+  PYTHON_VERSION: "3"
+  PACK_METHOD: "Anykernel3"
+  KERNELSU_METHOD: "shell"
+  HOOK_OLDER: "false"
+  BUILD_DEBUGGER: "false"
+
+jobs:
+  build-kernel:
+    name: Build Kernel for OnePlus 9R
+    runs-on: ubuntu-latest # 使用最新的 Ubuntu 服务器环境
+    env:
+      CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
+      CCACHE_NOHASHDIR: "true"
+      CCACHE_HARDLINK: "true"
+
+    steps:
+      - name: ⏰ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: ⌛️ Compilation environment preparation
+        uses: ./.github/workflows/build-env
+
+      - name: ⚙️ Get neccssary tools
+        uses: ./.github/workflows/build-ready
+
+      - name: 🔗 Patch for no-kprobe
+        uses: ./.github/workflows/patch-no-kprobe
+
+      - name: 🪝 Patch Kernel of SUSFS # <-- 这一步会执行 SuSFS 的补丁
+        uses: ./.github/workflows/patch-susfs
+
+      - name: 🧰 Patch Kernel of Re:Kernel
+        uses: ./.github/workflows/patch-rekernel
+
+      - name: 🚀 Build Process
+        uses: ./.github/workflows/build-process
+
+      - name: 🔩 Pack Process
+        uses: ./.github/workflows/pack-process
+
+      - name: ✏️ Upload Artifacts
+        uses: ./.github/workflows/upload-files
