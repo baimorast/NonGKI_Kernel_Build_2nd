@@ -197,6 +197,11 @@ jobs:
             sed -i 's/<linux\/minmax.h>/<linux\/kernel.h>/g' drivers/kernelsu/sulog/event.c
           fi
 
+          # 10. 修复 supercall 缺失进程调度机制头文件导致 init_task 未定义问题
+          if [ -f "drivers/kernelsu/supercall/dispatch.c" ]; then
+            sed -i '2i #include <linux/sched/signal.h>\n#include <linux/sched/task.h>\n#include <linux/init_task.h>' drivers/kernelsu/supercall/dispatch.c
+          fi
+
       - name: 🚀 Build Process
         uses: ./.github/workflows/build-process
 
