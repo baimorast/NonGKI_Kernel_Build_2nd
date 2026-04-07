@@ -123,8 +123,9 @@ jobs:
           sed -i '/hif_err("CE handle is null");/{n;s/return A_ERROR;/return QDF_STATUS_E_NULL_VALUE;/;}' drivers/staging/qca-wifi-host-cmn/hif/src/ce/ce_main.c
 
           # Fix QCOM power supply incomplete definitions
-          # 修复: 直接在缺失依赖的头文件中添加 power_supply.h，避免打乱原有 .c 文件的 pr_fmt 宏
-          sed -i '1i #include <linux/power_supply.h>' drivers/power/supply/qcom/smb5-lib.h
+          sed -i '1i struct smb_charger;' drivers/power/supply/qcom/schgm-flash.h
+          # 关键点：在 pr_fmt 定义之后再追加引入头文件，不仅不报错，还能彻底修复结构体缺失
+          sed -i '/#define pr_fmt/a #include <linux/power_supply.h>\n#include "smb5-lib.h"' drivers/power/supply/qcom/schgm-flash.c
 
       - name: 🧰 Patch Kernel of Re:Kernel
         uses: ./.github/workflows/patch-rekernel
