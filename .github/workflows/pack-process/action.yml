@@ -38,8 +38,6 @@ runs:
             cp -fp $IMAGE_DIR/zImage-dtb tmp
             echo "Found zImage-dtb (ARMV7A) !"
           elif [[ -f "$IMAGE_DIR/Image" ]]; then
-            # gzip -c $IMAGE_DIR/Image > $IMAGE_DIR/Image.gz
-            # cp -fp $IMAGE_DIR/Image.gz tmp
             cp -fp $IMAGE_DIR/Image tmp
             echo "Found Image !"
           fi
@@ -63,17 +61,16 @@ runs:
             cp -fp $IMAGE_DIR/dtb tmp
           elif [ "${{ env.GENERATE_DTB }}" == "true" ]; then
             if ls $IMAGE_DIR/dts/${{ env.GENERATE_CHIP }}/*.dtb 1> /dev/null 2>&1; then
-                DTB_PATH="dts"
+                cat $IMAGE_DIR/dts/${{ env.GENERATE_CHIP }}/*.dtb > $IMAGE_DIR/DTB
+                cp -fp $IMAGE_DIR/DTB tmp
+                echo "Generated ${{ env.GENERATE_CHIP }} DTB."
             elif ls $IMAGE_DIR/dts/vendor/${{ env.GENERATE_CHIP }}/*.dtb 1> /dev/null 2>&1; then
-                DTB_PATH="dts/vendor"
+                cat $IMAGE_DIR/dts/vendor/${{ env.GENERATE_CHIP }}/*.dtb > $IMAGE_DIR/DTB
+                cp -fp $IMAGE_DIR/DTB tmp
+                echo "Generated ${{ env.GENERATE_CHIP }} DTB."
             else
-                echo "Not found dts, abort."
-                false
+                echo "Not found dts, skipping DTB generation. Will just pack the kernel."
             fi
-
-            cat $IMAGE_DIR/$DTB_PATH/${{ env.GENERATE_CHIP }}/*.dtb > $IMAGE_DIR/DTB
-            cp -fp $IMAGE_DIR/DTB tmp
-            echo "Generated ${{ env.GENERATE_CHIP }} DTB."
           else
             echo "Doesn't found DTB! Your device maybe needn't the file."
           fi
@@ -136,17 +133,16 @@ runs:
             cp -fp $IMAGE_DIR/dtb out/dtb
           elif [ "${{ env.GENERATE_DTB }}" == "true" ]; then
             if ls $IMAGE_DIR/dts/${{ env.GENERATE_CHIP }}/*.dtb 1> /dev/null 2>&1; then
-                DTB_PATH="dts"
+                cat $IMAGE_DIR/dts/${{ env.GENERATE_CHIP }}/*.dtb > $IMAGE_DIR/DTB
+                cp -fp $IMAGE_DIR/DTB tmp
+                echo "Generated ${{ env.GENERATE_CHIP }} DTB."
             elif ls $IMAGE_DIR/dts/vendor/${{ env.GENERATE_CHIP }}/*.dtb 1> /dev/null 2>&1; then
-                DTB_PATH="dts/vendor"
+                cat $IMAGE_DIR/dts/vendor/${{ env.GENERATE_CHIP }}/*.dtb > $IMAGE_DIR/DTB
+                cp -fp $IMAGE_DIR/DTB tmp
+                echo "Generated ${{ env.GENERATE_CHIP }} DTB."
             else
-                echo "Not found dts, abort."
-                false
+                echo "Not found dts, skipping DTB generation. Will just pack the kernel."
             fi
-
-            cat $IMAGE_DIR/$DTB_PATH/${{ env.GENERATE_CHIP }}/*.dtb > $IMAGE_DIR/DTB
-            cp -fp $IMAGE_DIR/DTB tmp
-            echo "Generated ${{ env.GENERATE_CHIP }} DTB."
           else
             echo "Doesn't found DTB! Your device maybe needn't the file."
           fi
