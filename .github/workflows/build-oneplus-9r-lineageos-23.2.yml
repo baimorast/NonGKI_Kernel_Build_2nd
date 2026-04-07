@@ -127,9 +127,8 @@ jobs:
           # 在 schgm-flash.c 中的 schgm-flash.h 前注入关联库头文件修复缺失的定义 (-Wimplicit-function-declaration)
           sed -i '/#include "schgm-flash.h"/i #include "smb5-lib.h"\n#include "smb5-reg.h"' drivers/power/supply/qcom/schgm-flash.c
 
-          # Fix missing SuSFS declarations in namespace.c
-          sed -i '1i #include <linux/susfs.h>' fs/namespace.c
-          sed -i '/#include <linux\/susfs.h>/a #include "pnode.h"\n#include "mount.h"' fs/namespace.c
+          # Safely inject SuSFS headers and KSU macros into namespace.c after standard linux includes
+          sed -i '/#include <linux\/fs.h>/a #include <linux\/susfs.h>\n#ifndef CL_COPY_MNT_NS\n#define CL_COPY_MNT_NS (1<<23)\n#endif\n#ifndef VFSMOUNT_MNT_FLAGS_KSU_UNSHARED_MNT\n#define VFSMOUNT_MNT_FLAGS_KSU_UNSHARED_MNT 0x2000000\n#endif' fs/namespace.c
 
       - name: 🧰 Patch Kernel of Re:Kernel
         uses: ./.github/workflows/patch-rekernel
