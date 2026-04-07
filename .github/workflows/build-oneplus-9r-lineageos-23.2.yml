@@ -5,39 +5,38 @@ on:
   workflow_dispatch:
 
 env:
+  # Device env
   DEVICE_NAME : "oneplus_9r"
   DEVICE_CODENAME : "lemonades"
 
-  CUSTOM_CMDS : "CLANG_TRIPLE=aarch64-linux-gnu-"
-  EXTRA_CMDS : "LD=ld.lld LLVM=1 LLVM_IAS=1 KCFLAGS=-Wno-error=frame-larger-than="
+  CUSTOM_CMDS : "CROSS_COMPILE=aarch64-linux-gnu- CLANG_TRIPLE=aarch64-linux-gnu-"
+  EXTRA_CMDS : "LLVM=1 LLVM_IAS=1"
 
-  KERNEL_SOURCE : "https://github.com/LineageOS/android_kernel_oneplus_sm8250"
+  KERNEL_SOURCE : "https://github.com/LineageOS/android_kernel_oneplus_sm8250.git"
   KERNEL_BRANCH : "lineage-23.2"
 
-  CLANG_SOURCE : "https://github.com/LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b.git"
-  CLANG_BRANCH : "lineage-20.0"
+  CLANG_SOURCE : "https://github.com/bachnxuan/aosp_clang_mirror/releases/download/clang-r574158-14475230/clang-r574158.tar.gz"
+  CLANG_BRANCH : ""
 
   GCC_GNU : false
-  GCC_64_SOURCE : "https://github.com/JackA1ltman/Google-GCC-Android-4.9.git"
-  GCC_64_BRANCH : "aarch64"
-  GCC_32_SOURCE : "https://github.com/JackA1ltman/Google-GCC-Android-4.9.git"
-  GCC_32_BRANCH : "arm32"
+  GCC_64_SOURCE : "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9.git"
+  GCC_64_BRANCH : "android12L-release"
+  GCC_32_SOURCE : "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9.git"
+  GCC_32_BRANCH : "android12L-release"
 
   DEFCONFIG_SOURCE: ""
   DEFCONFIG_NAME : "vendor/kona-perf_defconfig"
   DEFCONFIG_ORIGIN_IMAGE: ""
   DEFCONFIG_FROM_BOOT: false
 
-  KERNELSU_SOURCE : "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh"
-  KERNELSU_BRANCH : "susfs-main"
-  KERNELSU_NAME : "KernelSU"
+  KERNELSU_SOURCE : ""
+  KERNELSU_BRANCH : ""
 
-  KERNELSU_AUTO_GET : "false"
-  KERNELSU_AUTO_FORK : "" # magic, rsuntk and sukisu
+  KERNELSU_AUTO_GET : "true" # if u want easy setting kernelsu, u can true.
+  KERNELSU_AUTO_FORK : "resukisu" # xxksu, rsuntk, next, resukisu and sukisu
 
   SUSFS_ENABLE : true
-  SUSFS_FIXED : true
-  SUSFS_UPDATE : true
+  SUSFS_FIXED : false
 
   AK3_SOURCE : "https://github.com/osm0sis/AnyKernel3.git"
   AK3_BRANCH : "master"
@@ -47,39 +46,45 @@ env:
   NEED_DTBO : false
   NEED_SAFE_DTBO : false
 
-  ROM_TEXT : "lineage-23.2"
+  ROM_TEXT : "lineageos_23.2"
 
   # Other env
-  PYTHON_VERSION: "3"
+  PYTHON_VERSION: "3" # Only 2(Ubuntu 22.04 and Ubuntu 20.04) or 3(Any OS Versions).
 
-  PACK_METHOD: "Anykernel3"
+  PACK_METHOD: "Anykernel3" # Anykernel3 need SOURCE and BRANCH, MKBOOTIMG needn't it.
+  PACK_KMODULES: "false" # if u want pack kernel modules (.ko) into Anykernel3.
 
   KERNELSU_METHOD: "shell" # shell, manual and only.
-  KERNELSU_SUS_PATCH: "false" # if u need manual susfs patch to kernelsu.
 
-  PATCHES_SOURCE: "baimorast/NonGKI_Kernel_Patches" # [your_name]/[your_patch] -> gooder123/NonGKI_Patcher
-  PATCHES_BRANCH: "op_kernel" # [your_branch] -> main
+  PATCHES_SOURCE: "" # [your_name]/[your_patch] -> gooder123/NonGKI_Patcher
+  PATCHES_BRANCH: "" # [your_branch] -> main
 
   SUSFS_FOLDER_FIXED: "" # Fill in your patch prefix directory here. Leave it blank if there isn't one. -> your_folder
-  SUSFS_155_FIXED: "" # Fill in your patches here. If there are multiple patches, please separate them with a comma. Leave it blank if there isn't one. -> patch1,patch2 (Only v1.5.5 SuSFS)
-  SUSFS_LATEST_FIXED: "" # Fill in your patches here. If there are multiple patches, please separate them with a comma. Leave it blank if there isn't one. -> patch1,patch2
+  SUSFS_PATCH_FIXED: "" # Fill in your patches here. If there are multiple patches, please separate them with a comma. Leave it blank if there isn't one. -> patch1,patch2
 
   REKERNEL_ENABLE: "false" # if u need Re:Kernel.
 
-  HOOK_METHOD: "tracepoint" # manual hook method,can choice : normal, syscall and tracepoint.
-  HOOK_OLDER: "false" # contain backport older patch and syscall older patch.
+  HOOK_METHOD: "syscall" # Manual hook method -> syscall.
 
-  KPM_ENABLE: "true" # Only use it for SukiSU-Ultra.
-  KPM_FIX: "false" # Fix Error When Enabling KPM.
-  KPM_PATCH_SOURCE: "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU_patch/refs/heads/main/kpm/patch_linux" # patch exec file source -> raw.githubusercontent.com/Test/Test/patch .
+  KERNEL_PATCH: "false" # If your kernel version is <= 4.9, you have the option of enabling the patch to patch the kernel_write and kernel_read functions.
 
-  GENERATE_DTB: "false" # if u kernel need DTB , but cannot auto generate it. (Only Anykernel3).
+  KPM_ENABLE: "true" # Anyone devices.
+  KPM_INLINE: "true" # Only use it for SukiSU-Ultra.
+  KPM_KPATCH_NEXT: "false" # If u want hook KPatch-Next in build step.
+  KPM_PATCH_SOURCE: "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU_patch/refs/heads/main/kpm/patch_linux" # If u want to use KPM Inline,so you need set patch exec file source -> raw.githubusercontent.com/Test/Test/patch .
+
+  BASEBAND_GUARD_ENABLE: "false" #if u want prevent unauthorized writes to critical partitions/device nodes.
+  BASEBAND_GUARD_BOOT: "false" #if u want to protect boot partition.
+
+  HIDE_STUFF: "false" # hide some of the features
+
+  GENERATE_DTB: "true" # if u kernel need DTB , but cannot auto generate it. (Only Anykernel3).
   GENERATE_CHIP: "qcom" # only supported for qcom and mediatek.
 
   BUILD_DEBUGGER: "false" # Output build errors.
   SKIP_PATCH: "false" # Ignore errors found in Patch Debugger.
 
-  BUILD_OTHER_CONFIG: "true" # Merge config files.
+  BUILD_OTHER_CONFIG: "false" # Merge config files.
   MERGE_CONFIG_FILES: "vendor/oplus.config,vendor/debugfs.config"
 
   FREE_MORE_SPACE: "false" # if u want get more space, enabled it.
@@ -87,7 +92,8 @@ env:
 jobs:
   build-kernel:
     name: Build Kernel for OnePlus 9R
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest # u can changed to ubuntu 22.04, and need container set ubuntu-latest
+    # container: archlinux/archlinux:latest # if u need use arch linux -> archlinux/archlinux:latest or ubuntu 20.04 -> ubuntu:focal
     env:
       CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
       CCACHE_NOHASHDIR: "true"
@@ -95,7 +101,7 @@ jobs:
 
     steps:
       - name: ⏰ Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: ⌛️ Compilation environment preparation
         uses: ./.github/workflows/build-env
@@ -103,114 +109,27 @@ jobs:
       - name: ⚙️ Get neccssary tools
         uses: ./.github/workflows/build-ready
 
+      - name: 🪝 Patch Kernel of SUSFS
+        uses: ./.github/workflows/patch-susfs
+
       - name: 🔗 Patch for no-kprobe
         uses: ./.github/workflows/patch-no-kprobe
 
-      - name: 🪝 Patch Kernel of SUSFS
-        uses: ./.github/workflows/patch-susfs
+      - name: 🪛 Extra Kernel Options
+        run: |
+          # Only ${{ env.DEVICE_NAME }} use it.
+          cd $GITHUB_WORKSPACE/device_kernel
+          # Clang 21 compatibility
+          sed -i '/hif_err("CE handle is null");/{n;s/return A_ERROR;/return QDF_STATUS_E_NULL_VALUE;/;}' drivers/staging/qca-wifi-host-cmn/hif/src/ce/ce_main.c
 
       - name: 🧰 Patch Kernel of Re:Kernel
         uses: ./.github/workflows/patch-rekernel
 
-      - name: 🛠️ Fix Qualcomm schgm-flash compilation errors
-        run: |
-          cd device_kernel # 请确保目录名与实际 checkout 后的主源码目录匹配
-          
-          # 1. 为 schgm-flash.h 添加 struct smb_charger 的前置声明解决可见性问题 (-Wvisibility)
-          sed -i '1i struct smb_charger;' drivers/power/supply/qcom/schgm-flash.h
-          
-          # 2. 在 schgm-flash.c 中的 schgm-flash.h 前注入关联库头文件修复缺失的定义 (-Wimplicit-function-declaration)
-          sed -i '/#include "schgm-flash.h"/i #include "smb5-lib.h"\n#include "smb5-reg.h"' drivers/power/supply/qcom/schgm-flash.c
+      - name: 🔒 Patch Kernel of Baseband Guard
+        uses: ./.github/workflows/patch-baseband-guard
 
-      - name: 🛠️ Fix SukiSU-Ultra for Linux 4.19
-        run: |
-          cd device_kernel
-          
-          # 1. 移除 4.19 不支持的 MODULE_IMPORT_NS
-          if [ -f "drivers/kernelsu/core/init.c" ]; then
-            sed -i '/MODULE_IMPORT_NS/d' drivers/kernelsu/core/init.c
-          fi
-          
-          # 2. 移除 4.19 不支持的 clone3 系统调用 Hook (__NR_clone3)
-          if [ -f "drivers/kernelsu/hook/syscall_hook_manager.c" ]; then
-            sed -i '/__NR_clone3/d' drivers/kernelsu/hook/syscall_hook_manager.c
-          fi
-
-          # 3. 修复 file_wrapper.c 中因为 4.19 缺失新版 f_ops 所导致的报错与未使用的变量
-          if [ -f "drivers/kernelsu/infra/file_wrapper.c" ]; then
-            # 告诉编译器忽略 orig 这个未使用变量的警告
-            sed -i 's/struct file \*orig = data->orig;/struct file *orig __attribute__((unused)) = data->orig;/g' drivers/kernelsu/infra/file_wrapper.c
-            
-            # 把对这些不存在方法的调用替换为返回 -EINVAL (无效参数错误)
-            sed -i 's/orig->f_op->iopoll.*/-EINVAL;/g' drivers/kernelsu/infra/file_wrapper.c
-            sed -i 's/orig->f_op->remap_file_range.*/-EINVAL;/g' drivers/kernelsu/infra/file_wrapper.c
-            
-            # 把未定义的宏替换为 0 (规避校验)
-            sed -i 's/REMAP_FILE_DEDUP/0/g' drivers/kernelsu/infra/file_wrapper.c
-            
-            # 删除不支持的方法绑定语句
-            sed -i '/p->ops.iopoll/d' drivers/kernelsu/infra/file_wrapper.c
-            sed -i '/p->ops.remap_file_range/d' drivers/kernelsu/infra/file_wrapper.c
-          fi
-
-          # 4. 修复 seccomp_cache.c 缺失的 SECCOMP_ARCH_NATIVE_NR 宏 (4.19没有这个宏, 直接设定为512个系统调用上限)
-          if [ -f "drivers/kernelsu/infra/seccomp_cache.c" ]; then
-            sed -i 's/SECCOMP_ARCH_NATIVE_NR/512/g' drivers/kernelsu/infra/seccomp_cache.c
-          fi
-
-          # 5. 修复 su_mount_ns.c 的头文件引入问题 (4.19 没有 uapi/linux/mount.h)
-          if [ -f "drivers/kernelsu/infra/su_mount_ns.c" ]; then
-            sed -i 's/<uapi\/linux\/mount.h>/<linux\/mount.h>/g' drivers/kernelsu/infra/su_mount_ns.c
-          fi
-
-          # 6. 修复 pkg_observer.c 的 fsnotify (使用明确的结构体名 ksu_ops 作为锚点)
-          if [ -f "drivers/kernelsu/manager/pkg_observer.c" ]; then
-            # 插入满足 4.19 函数签名的空函数在结构体前面
-            sed -i '/static const struct fsnotify_ops ksu_ops/i int ksu_dummy_handle_event(struct fsnotify_group *g, struct inode *i, u32 m, const void *d, int dt, const unsigned char *fn, u32 c, struct fsnotify_iter_info *ii) { return 0; }' drivers/kernelsu/manager/pkg_observer.c
-            # 替换结构体里的旧版调用属性
-            sed -i 's/\.handle_inode_event = ksu_handle_inode_event,/\.handle_event = ksu_dummy_handle_event,/g' drivers/kernelsu/manager/pkg_observer.c
-          fi
-
-          # 7. 修复 allowlist.c 缺少头文件和 4.19 中 task_work_add 参数变动的问题
-          if [ -f "drivers/kernelsu/policy/allowlist.c" ]; then
-            # 添加依赖头文件
-            sed -i '2i #include <linux/sched/task.h>' drivers/kernelsu/policy/allowlist.c
-            # 兼容 4.19 task_work_add 参数
-            sed -i 's/TWA_RESUME/true/g' drivers/kernelsu/policy/allowlist.c
-          fi
-
-          # 8. 修复 SELinux 在 4.19 的数据结构不兼容问题 (通过生成 Dummy 函数跳过 KernelSU 本地注入)
-          if [ -d "drivers/kernelsu/selinux" ]; then
-            # 覆写 sepolicy.c
-            echo "struct selinux_policy;" > drivers/kernelsu/selinux/sepolicy.c
-            echo "struct selinux_policy *ksu_dup_sepolicy(struct selinux_policy *old_pol) { return (void *)0; }" >> drivers/kernelsu/selinux/sepolicy.c
-            echo "void ksu_free_sepolicy(struct selinux_policy *pol) {}" >> drivers/kernelsu/selinux/sepolicy.c
-            # 覆写 rules.c
-            echo "void apply_kernelsu_rules(void) {}" > drivers/kernelsu/selinux/rules.c
-            echo "void ksu_apply_rules(void) {}" >> drivers/kernelsu/selinux/rules.c
-            echo "void apply_rules(void) {}" >> drivers/kernelsu/selinux/rules.c
-            echo "void ksu_selinux_setup_rule(void) {}" >> drivers/kernelsu/selinux/rules.c
-          fi
-
-          # 9. 修复 4.19 缺失的 <linux/minmax.h> 头文件
-          if [ -f "drivers/kernelsu/sulog/event.c" ]; then
-            sed -i 's/<linux\/minmax.h>/<linux\/kernel.h>/g' drivers/kernelsu/sulog/event.c
-          fi
-
-          # 10. 修复 supercall 缺失进程调度机制头文件导致 init_task 未定义问题
-          if [ -f "drivers/kernelsu/supercall/dispatch.c" ]; then
-            sed -i '2i #include <linux/sched/signal.h>\n#include <linux/sched/task.h>\n#include <linux/init_task.h>' drivers/kernelsu/supercall/dispatch.c
-          fi
-
-          # 11. 修复 supercall.c 中 task_work_add 参数变动问题
-          if [ -f "drivers/kernelsu/supercall/supercall.c" ]; then
-            sed -i 's/TWA_RESUME/true/g' drivers/kernelsu/supercall/supercall.c
-          fi
-
-          # 12. 修复 manual_su 缺失 random 头文件问题
-          if [ -f "drivers/kernelsu/other/manual_su.c" ]; then
-            sed -i '1i #include <linux/random.h>' drivers/kernelsu/other/manual_su.c
-          fi
+      - name: 🔧 Patch Hide Stuff
+        uses: ./.github/workflows/patch-hide-stuff
 
       - name: 🚀 Build Process
         uses: ./.github/workflows/build-process
@@ -219,4 +138,5 @@ jobs:
         uses: ./.github/workflows/pack-process
 
       - name: ✏️ Upload Artifacts
+
         uses: ./.github/workflows/upload-files
