@@ -163,12 +163,13 @@ jobs:
             sed -i 's/<uapi\/linux\/mount.h>/<linux\/mount.h>/g' drivers/kernelsu/infra/su_mount_ns.c
           fi
 
-          # 6. 修复 pkg_observer.c 的 fsnotify (确保假函数插入在 struct 外部)
+          # 6. 修复 pkg_observer.c 中 fsnotify API 不兼容 (4.19 使用 .handle_event 且函数签名比新版多一个 group 参数)
           if [ -f "drivers/kernelsu/manager/pkg_observer.c" ]; then
-            # 插入满足 4.19 函数签名的空函数在结构体前面
-            sed -i '/ksu_fsnotify_ops =/i int ksu_dummy_handle_event(struct fsnotify_group *g, struct inode *i, u32 m, const void *d, int dt, const unsigned char *fn, u32 c, struct fsnotify_iter_info *ii) { return 0; }' drivers/kernelsu/manager/pkg_observer.c
-            # 替换结构体里的旧版调用属性
-            sed -i 's/\.handle_inode_event = ksu_handle_inode_event,/\.handle_event = ksu_dummy_handle_event,/g' drivers/kernelsu/manager/pkg_observer.c
+            # 把新版字段名改成 4.19 实际支持的字段
+            sed -i 's/\.handle_inode_event = ksu_handle_inode_event,/\.handle_event = ksu_handle_inode_event,/g' drivers/kernelsu/manager/pkg_observer.c
+            
+            # 把函数定义增加 group 参数（4.19 的 handle_event 签名要求），标记为 unused 避免新警告
+            sed -i 's/int ksu_handle_inode_event(struct fsnotify_mark \*mark, u32 mask/int ksu_handle_inode_event(struct fsnotify_group \*group __attribute__((unused)), struct fsnotify_mark \*mark, u32 mask/g' drivers/kernelsu/manager/pkg_observer.c
           fi
 
       - name: 🚀 Build Process
