@@ -122,6 +122,10 @@ jobs:
           # Clang 21 compatibility
           sed -i '/hif_err("CE handle is null");/{n;s/return A_ERROR;/return QDF_STATUS_E_NULL_VALUE;/;}' drivers/staging/qca-wifi-host-cmn/hif/src/ce/ce_main.c
 
+          # Fix QCOM schgm-flash incomplete definitions
+          sed -i '1i struct smb_charger;' drivers/power/supply/qcom/schgm-flash.h
+          sed -i '1i #include "smb5-lib.h"' drivers/power/supply/qcom/schgm-flash.c
+
       - name: 🧰 Patch Kernel of Re:Kernel
         uses: ./.github/workflows/patch-rekernel
 
