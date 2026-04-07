@@ -136,8 +136,11 @@ jobs:
             sed -i '/__NR_clone3/d' drivers/kernelsu/hook/syscall_hook_manager.c
           fi
 
-          # 3. 修复 file_wrapper.c 中 4.19 不支持的高级文件系统结构体成员
+          # 3. 修复 file_wrapper.c 中因为 4.19 缺失新版 f_ops 所导致的报错与未使用的变量
           if [ -f "drivers/kernelsu/infra/file_wrapper.c" ]; then
+            # 告诉编译器忽略 orig 这个未使用变量的警告
+            sed -i 's/struct file \*orig = data->orig;/struct file *orig __attribute__((unused)) = data->orig;/g' drivers/kernelsu/infra/file_wrapper.c
+            
             # 把对这些不存在方法的调用替换为返回 -EINVAL (无效参数错误)
             sed -i 's/orig->f_op->iopoll.*/-EINVAL;/g' drivers/kernelsu/infra/file_wrapper.c
             sed -i 's/orig->f_op->remap_file_range.*/-EINVAL;/g' drivers/kernelsu/infra/file_wrapper.c
