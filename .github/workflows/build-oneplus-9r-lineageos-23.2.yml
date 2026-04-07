@@ -192,6 +192,11 @@ jobs:
             echo "void ksu_selinux_setup_rule(void) {}" >> drivers/kernelsu/selinux/rules.c
           fi
 
+          # 9. 修复 4.19 缺失的 <linux/minmax.h> 头文件
+          if [ -f "drivers/kernelsu/sulog/event.c" ]; then
+            sed -i 's/<linux\/minmax.h>/<linux\/kernel.h>/g' drivers/kernelsu/sulog/event.c
+          fi
+
       - name: 🚀 Build Process
         uses: ./.github/workflows/build-process
 
