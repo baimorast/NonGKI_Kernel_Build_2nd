@@ -136,6 +136,20 @@ jobs:
             sed -i '/__NR_clone3/d' drivers/kernelsu/hook/syscall_hook_manager.c
           fi
 
+          # 3. 修复 file_wrapper.c 中 4.19 不支持的高级文件系统结构体成员
+          if [ -f "drivers/kernelsu/infra/file_wrapper.c" ]; then
+            # 把对这些不存在方法的调用替换为返回 -EINVAL (无效参数错误)
+            sed -i 's/orig->f_op->iopoll.*/-EINVAL;/g' drivers/kernelsu/infra/file_wrapper.c
+            sed -i 's/orig->f_op->remap_file_range.*/-EINVAL;/g' drivers/kernelsu/infra/file_wrapper.c
+            
+            # 把未定义的宏替换为 0 (规避校验)
+            sed -i 's/REMAP_FILE_DEDUP/0/g' drivers/kernelsu/infra/file_wrapper.c
+            
+            # 删除不支持的方法绑定语句
+            sed -i '/p->ops.iopoll/d' drivers/kernelsu/infra/file_wrapper.c
+            sed -i '/p->ops.remap_file_range/d' drivers/kernelsu/infra/file_wrapper.c
+          fi
+
       - name: 🚀 Build Process
         uses: ./.github/workflows/build-process
 
