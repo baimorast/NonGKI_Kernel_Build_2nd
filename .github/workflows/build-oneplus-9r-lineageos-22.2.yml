@@ -1,0 +1,183 @@
+name: Build OnePlus 9R LineageOS Kernel with SukiSU-Ultra and SuSFS
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+env:
+  DEVICE_NAME : "oneplus_9r"
+  DEVICE_CODENAME : "lemonades"
+
+  CUSTOM_CMDS : "CLANG_TRIPLE=aarch64-linux-gnu-"
+  EXTRA_CMDS : "LD=ld.lld LLVM=1 LLVM_IAS=1 KCFLAGS=-Wno-error=frame-larger-than="
+  
+  KERNEL_SOURCE : "https://github.com/baimorast/android_kernel_oneplus_sm8250"
+  KERNEL_BRANCH : "lineage-22.2"
+
+  CLANG_SOURCE : "https://github.com/LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b.git"
+  CLANG_BRANCH : "lineage-20.0"
+
+  GCC_GNU : false
+  GCC_64_SOURCE : "https://github.com/JackA1ltman/Google-GCC-Android-4.9.git"
+  GCC_64_BRANCH : "aarch64"
+  GCC_32_SOURCE : "https://github.com/JackA1ltman/Google-GCC-Android-4.9.git"
+  GCC_32_BRANCH : "arm32"
+
+  DEFCONFIG_SOURCE: ""
+  DEFCONFIG_NAME : "vendor/kona-perf_defconfig"
+  DEFCONFIG_ORIGIN_IMAGE: ""
+  DEFCONFIG_FROM_BOOT: false
+  
+  KERNELSU_SOURCE : "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh"
+  KERNELSU_BRANCH : "susfs-main"
+  KERNELSU_NAME : "KernelSU"
+
+  KERNELSU_AUTO_GET : "false"
+  KERNELSU_AUTO_FORK : "" # magic, rsuntk and sukisu
+
+  SUSFS_ENABLE : true
+  SUSFS_FIXED : true
+  SUSFS_UPDATE : true
+
+  AK3_SOURCE : "https://github.com/osm0sis/AnyKernel3.git"
+  AK3_BRANCH : "master"
+
+  BOOT_SOURCE : ""
+
+  NEED_DTBO : false
+  NEED_SAFE_DTBO : false
+
+  ROM_TEXT : "lineage-22.2"
+
+  # Other env
+  PYTHON_VERSION: "3"
+
+  PACK_METHOD: "Anykernel3"
+
+  KERNELSU_METHOD: "shell" # shell, manual and only.
+  KERNELSU_SUS_PATCH: "false" # if u need manual susfs patch to kernelsu.
+
+  PATCHES_SOURCE: "baimorast/NonGKI_Kernel_Patches" # [your_name]/[your_patch] -> gooder123/NonGKI_Patcher
+  PATCHES_BRANCH: "op_kernel" # [your_branch] -> main
+
+  SUSFS_FOLDER_FIXED: "" # Fill in your patch prefix directory here. Leave it blank if there isn't one. -> your_folder
+  SUSFS_155_FIXED: "" # Fill in your patches here. If there are multiple patches, please separate them with a comma. Leave it blank if there isn't one. -> patch1,patch2 (Only v1.5.5 SuSFS)
+  SUSFS_LATEST_FIXED: "fix_susfs_lineageos" # Fill in your patches here. If there are multiple patches, please separate them with a comma. Leave it blank if there isn't one. -> patch1,patch2
+
+  REKERNEL_ENABLE: "false" # if u need Re:Kernel.
+
+  HOOK_METHOD: "tracepoint" # manual hook method,can choice : normal, syscall and tracepoint.
+  HOOK_OLDER: "false" # contain backport older patch and syscall older patch.
+
+  KPM_ENABLE: "true" # Only use it for SukiSU-Ultra.
+  KPM_FIX: "false" # Fix Error When Enabling KPM.
+  KPM_PATCH_SOURCE: "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU_patch/refs/heads/main/kpm/patch_linux" # patch exec file source -> raw.githubusercontent.com/Test/Test/patch .
+
+  GENERATE_DTB: "false" # if u kernel need DTB , but cannot auto generate it. (Only Anykernel3).
+  GENERATE_CHIP: "qcom" # only supported for qcom and mediatek.
+
+  BUILD_DEBUGGER: "false" # Output build errors.
+  SKIP_PATCH: "false" # Ignore errors found in Patch Debugger.
+
+  BUILD_OTHER_CONFIG: "true" # Merge config files.
+  MERGE_CONFIG_FILES: "vendor/debugfs.config"
+
+  FREE_MORE_SPACE: "false" # if u want get more space, enabled it.
+
+jobs:
+  build-kernel:
+    name: Build Kernel for OnePlus 9R
+    runs-on: ubuntu-22.04
+    env:
+      CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
+      CCACHE_NOHASHDIR: "true"
+      CCACHE_HARDLINK: "true"
+
+    steps:
+      - name: ⏰ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: ⌛️ Compilation environment preparation
+        uses: ./.github/workflows/build-env
+
+      - name: ⚙️ Get neccssary tools
+        uses: ./.github/workflows/build-ready
+
+      - name: 🔗 Patch for no-kprobe
+        uses: ./.github/workflows/patch-no-kprobe
+
+      - name: 🪝 Patch Kernel of SUSFS
+        uses: ./.github/workflows/patch-susfs
+
+      - name: 🧰 Patch Kernel of Re:Kernel
+        uses: ./.github/workflows/patch-rekernel
+
+      - name: 🔍 Debug Search for Variable Definitions
+        shell: bash
+        run: |
+          echo "============================================================"
+          echo ">>> Searching for the definition of 'susfs_mnt_id_ida'..."
+          cd $GITHUB_WORKSPACE/device_kernel/
+          # 使用 grep -r 在所有文件中递归搜索
+          # -q 参数让 grep 在找到第一个匹配项后就静默退出，非常适合在 if 语句中使用
+          if grep -q -r "susfs_mnt_id_ida" .; then
+            echo "✅ FOUND! The identifier 'susfs_mnt_id_ida' was found in the following files/lines:"
+            # 再次运行 grep 但不带 -q 参数，以显示所有匹配的行
+            grep -r "susfs_mnt_id_ida" .
+          else
+            echo "❌ NOT FOUND! The identifier 'susfs_mnt_id_ida' is NOT DEFINED anywhere in the patched source code."
+            echo "This strongly indicates a version compatibility issue with your SuSFS patches."
+          fi
+          echo "============================================================"
+
+
+      - name: 🔍 Inspect Patched Files
+        shell: bash
+        run: |
+          echo "============================================================"
+          echo ">>> Inspecting the state of 'fs/namespace.c' after patching..."
+          cd $GITHUB_WORKSPACE/device_kernel/
+          
+          # 首先，检查是否存在 .rej 文件，这是最关键的失败信号
+          REJ_FILE="fs/namespace.c.rej"
+          if [ -f "$REJ_FILE" ]; then
+            echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+            echo "!!! CRITICAL ERROR: Patch rejection file found!            !!!"
+            echo "!!! This means the patch for 'namespace.c' FAILED to apply cleanly. !!!"
+            echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+            echo ">>> Contents of the REJECTED patch hunk ($REJ_FILE):"
+            cat "$REJ_FILE"
+            echo "------------------------------------------------------------"
+          else
+            echo "✅ Patch for 'namespace.c' seems to have applied without rejection."
+          fi
+          
+          echo ">>> Full content of the patched 'fs/namespace.c' file:"
+          echo "--------------------- START OF FILE ----------------------"
+          # 使用 cat 显示文件的完整内容
+          cat fs/namespace.c
+          echo "---------------------- END OF FILE -----------------------"
+          echo "============================================================"
+
+
+      - name: 🚀 Build Process
+        uses: ./.github/workflows/build-process
+
+      - name: 🔩 Pack Process
+        uses: ./.github/workflows/pack-process
+
+      - name: ✏️ Upload Artifacts
+        uses: ./.github/workflows/upload-files
+
+
+
+
+
+
+
+
+
+
+
+
+
