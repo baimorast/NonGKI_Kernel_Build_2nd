@@ -153,6 +153,11 @@ jobs:
             sed -i '/p->ops.remap_file_range/d' drivers/kernelsu/infra/file_wrapper.c
           fi
 
+          # 4. 修复 seccomp_cache.c 缺失的 SECCOMP_ARCH_NATIVE_NR 宏 (4.19没有这个宏, 直接设定为512个系统调用上限)
+          if [ -f "drivers/kernelsu/infra/seccomp_cache.c" ]; then
+            sed -i 's/SECCOMP_ARCH_NATIVE_NR/512/g' drivers/kernelsu/infra/seccomp_cache.c
+          fi
+
       - name: 🚀 Build Process
         uses: ./.github/workflows/build-process
 
