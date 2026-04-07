@@ -163,11 +163,11 @@ jobs:
             sed -i 's/<uapi\/linux\/mount.h>/<linux\/mount.h>/g' drivers/kernelsu/infra/su_mount_ns.c
           fi
 
-          # 6. 修复 pkg_observer.c 的 fsnotify (使用 4.19 定义的空函数绕过报错)
+          # 6. 修复 pkg_observer.c 的 fsnotify (确保假函数插入在 struct 外部)
           if [ -f "drivers/kernelsu/manager/pkg_observer.c" ]; then
-            # 插入满足 4.19 函数签名的空函数
-            sed -i '/static const struct fsnotify_ops ksu_fsnotify_ops/i int ksu_dummy_handle_event(struct fsnotify_group *g, struct inode *i, u32 m, const void *d, int dt, const unsigned char *fn, u32 c, struct fsnotify_iter_info *ii) { return 0; }' drivers/kernelsu/manager/pkg_observer.c
-            # 替换旧的调用方法
+            # 插入满足 4.19 函数签名的空函数在结构体前面
+            sed -i '/ksu_fsnotify_ops =/i int ksu_dummy_handle_event(struct fsnotify_group *g, struct inode *i, u32 m, const void *d, int dt, const unsigned char *fn, u32 c, struct fsnotify_iter_info *ii) { return 0; }' drivers/kernelsu/manager/pkg_observer.c
+            # 替换结构体里的旧版调用属性
             sed -i 's/\.handle_inode_event = ksu_handle_inode_event,/\.handle_event = ksu_dummy_handle_event,/g' drivers/kernelsu/manager/pkg_observer.c
           fi
 
