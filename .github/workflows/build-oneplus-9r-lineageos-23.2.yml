@@ -129,6 +129,7 @@ jobs:
 
           # Fix missing SuSFS declarations in namespace.c
           sed -i '1i #include <linux/susfs.h>' fs/namespace.c
+          sed -i '/#include <linux\/susfs.h>/a #include "pnode.h"\n#include "mount.h"' fs/namespace.c
 
       - name: 🧰 Patch Kernel of Re:Kernel
         uses: ./.github/workflows/patch-rekernel
