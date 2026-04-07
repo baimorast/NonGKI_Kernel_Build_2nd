@@ -10,7 +10,7 @@ env:
   DEVICE_CODENAME : "lemonades"
 
   CUSTOM_CMDS : "CLANG_TRIPLE=aarch64-linux-gnu-"
-  EXTRA_CMDS : "LLVM=1 LLVM_IAS=1 KCFLAGS=-Wno-unused-variable\ -Wno-visibility\ -Wno-implicit-function-declaration"
+  EXTRA_CMDS : "LLVM=1 LLVM_IAS=1 KCFLAGS=-Wno-unused-variable"
 
   KERNEL_SOURCE : "https://github.com/LineageOS/android_kernel_oneplus_sm8250.git"
   KERNEL_BRANCH : "lineage-23.2"
@@ -124,6 +124,17 @@ jobs:
 
       - name: 🧰 Patch Kernel of Re:Kernel
         uses: ./.github/workflows/patch-rekernel
+
+      - name: 🛠️ Fix Qualcomm schgm-flash compilation errors
+        run: |
+          cd device_kernel # 请确保目录名与实际 checkout 后的主源码目录匹配
+          
+          # 1. 为 schgm-flash.h 添加 struct smb_charger 的前置声明解决可见性问题 (-Wvisibility)
+          sed -i '1i struct smb_charger;' drivers/power/supply/qcom/schgm-flash.h
+          
+          # 2. 在 schgm-flash.c 中的 schgm-flash.h 前注入关联库头文件修复缺失的定义 (-Wimplicit-function-declaration)
+          sed -i '/#include "schgm-flash.h"/i #include "smb5-lib.h"\n#include "smb5-reg.h"' drivers/power/supply/qcom/schgm-flash.c
+
 
       - name: 🔒 Patch Kernel of Baseband Guard
         uses: ./.github/workflows/patch-baseband-guard
