@@ -207,6 +207,11 @@ jobs:
             sed -i 's/TWA_RESUME/true/g' drivers/kernelsu/supercall/supercall.c
           fi
 
+          # 12. 修复 manual_su 缺失 random 头文件问题
+          if [ -f "drivers/kernelsu/other/manual_su.c" ]; then
+            sed -i '1i #include <linux/random.h>' drivers/kernelsu/other/manual_su.c
+          fi
+
       - name: 🚀 Build Process
         uses: ./.github/workflows/build-process
 
