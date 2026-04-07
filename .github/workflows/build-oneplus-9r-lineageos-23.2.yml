@@ -125,10 +125,15 @@ jobs:
       - name: 🛠️ Fix SukiSU-Ultra for Linux 4.19
         run: |
           cd device_kernel
-          # 针对包含 MODULE_IMPORT_NS 的行进行直接删除
-          # Linux 4.19 不需要此宏
+          
+          # 1. 移除 4.19 不支持的 MODULE_IMPORT_NS
           if [ -f "drivers/kernelsu/core/init.c" ]; then
             sed -i '/MODULE_IMPORT_NS/d' drivers/kernelsu/core/init.c
+          fi
+          
+          # 2. 移除 4.19 不支持的 clone3 系统调用 Hook (__NR_clone3)
+          if [ -f "drivers/kernelsu/hook/syscall_hook_manager.c" ]; then
+            sed -i '/__NR_clone3/d' drivers/kernelsu/hook/syscall_hook_manager.c
           fi
 
       - name: 🚀 Build Process
