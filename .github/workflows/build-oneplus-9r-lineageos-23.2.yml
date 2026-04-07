@@ -122,19 +122,16 @@ jobs:
           # Clang 21 compatibility
           sed -i '/hif_err("CE handle is null");/{n;s/return A_ERROR;/return QDF_STATUS_E_NULL_VALUE;/;}' drivers/staging/qca-wifi-host-cmn/hif/src/ce/ce_main.c
 
-      - name: 🧰 Patch Kernel of Re:Kernel
-        uses: ./.github/workflows/patch-rekernel
-
-      - name: 🛠️ Fix Qualcomm schgm-flash compilation errors
-        run: |
-          cd device_kernel # 请确保目录名与实际 checkout 后的主源码目录匹配
-          
-          # 1. 为 schgm-flash.h 添加 struct smb_charger 的前置声明解决可见性问题 (-Wvisibility)
+          # 为 schgm-flash.h 添加 struct smb_charger 的前置声明解决可见性问题 (-Wvisibility)
           sed -i '1i struct smb_charger;' drivers/power/supply/qcom/schgm-flash.h
-          
-          # 2. 在 schgm-flash.c 中的 schgm-flash.h 前注入关联库头文件修复缺失的定义 (-Wimplicit-function-declaration)
+          # 在 schgm-flash.c 中的 schgm-flash.h 前注入关联库头文件修复缺失的定义 (-Wimplicit-function-declaration)
           sed -i '/#include "schgm-flash.h"/i #include "smb5-lib.h"\n#include "smb5-reg.h"' drivers/power/supply/qcom/schgm-flash.c
 
+          # Fix missing SuSFS declarations in namespace.c
+          sed -i '1i #include <linux/susfs.h>' fs/namespace.c
+
+      - name: 🧰 Patch Kernel of Re:Kernel
+        uses: ./.github/workflows/patch-rekernel
 
       - name: 🔒 Patch Kernel of Baseband Guard
         uses: ./.github/workflows/patch-baseband-guard
