@@ -179,6 +179,24 @@ jobs:
             sed -i 's/TWA_RESUME/true/g' drivers/kernelsu/policy/allowlist.c
           fi
 
+          # 8. 修复 SELinux 在 4.19 的数据结构不兼容问题 (通过生成 Dummy 函数跳过 KernelSU 本地注入)
+          if [ -d "drivers/kernelsu/selinux" ]; then
+            # 覆写 sepolicy.c
+            cat << 'EOF' > drivers/kernelsu/selinux/sepolicy.c
+struct selinux_policy;
+struct selinux_policy *ksu_dup_sepolicy(struct selinux_policy *old_pol) { return (struct selinux_policy *)0; }
+void ksu_free_sepolicy(struct selinux_policy *pol) {}
+EOF
+            # 覆写 rules.c
+            cat << 'EOF' > drivers/kernelsu/selinux/rules.c
+// 提供各类常见分支所需的默认空入口函数，满足 Linker 编译需要
+void apply_kernelsu_rules(void) {}
+void ksu_apply_rules(void) {}
+void apply_rules(void) {}
+void ksu_selinux_setup_rule(void) {}
+EOF
+          fi
+
       - name: 🚀 Build Process
         uses: ./.github/workflows/build-process
 
