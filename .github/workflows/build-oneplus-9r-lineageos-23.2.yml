@@ -36,7 +36,7 @@ env:
   KERNELSU_AUTO_FORK : "resukisu" # xxksu, rsuntk, next, resukisu and sukisu
 
   SUSFS_ENABLE : true
-  SUSFS_FIXED : false
+  SUSFS_FIXED : true
 
   AK3_SOURCE : "https://github.com/osm0sis/AnyKernel3.git"
   AK3_BRANCH : "master"
@@ -56,11 +56,11 @@ env:
 
   KERNELSU_METHOD: "shell" # shell, manual and only.
 
-  PATCHES_SOURCE: "" # [your_name]/[your_patch] -> gooder123/NonGKI_Patcher
-  PATCHES_BRANCH: "" # [your_branch] -> main
+  PATCHES_SOURCE: "baimorast/NonGKI_Kernel_Patches" # [your_name]/[your_patch] -> gooder123/NonGKI_Patcher
+  PATCHES_BRANCH: "op_kernel" # [your_branch] -> main
 
   SUSFS_FOLDER_FIXED: "" # Fill in your patch prefix directory here. Leave it blank if there isn't one. -> your_folder
-  SUSFS_PATCH_FIXED: "" # Fill in your patches here. If there are multiple patches, please separate them with a comma. Leave it blank if there isn't one. -> patch1,patch2
+  SUSFS_PATCH_FIXED: "fix_susfs_lineageos" # Fill in your patches here. If there are multiple patches, please separate them with a comma. Leave it blank if there isn't one. -> patch1,patch2
 
   REKERNEL_ENABLE: "false" # if u need Re:Kernel.
 
@@ -122,13 +122,9 @@ jobs:
           # Clang 21 compatibility
           sed -i '/hif_err("CE handle is null");/{n;s/return A_ERROR;/return QDF_STATUS_E_NULL_VALUE;/;}' drivers/staging/qca-wifi-host-cmn/hif/src/ce/ce_main.c
 
-          # 为 schgm-flash.h 添加 struct smb_charger 的前置声明解决可见性问题 (-Wvisibility)
+          # Fix QCOM schgm-flash incomplete definitions
           sed -i '1i struct smb_charger;' drivers/power/supply/qcom/schgm-flash.h
-          # 在 schgm-flash.c 中的 schgm-flash.h 前注入关联库头文件修复缺失的定义 (-Wimplicit-function-declaration)
-          sed -i '/#include "schgm-flash.h"/i #include "smb5-lib.h"\n#include "smb5-reg.h"' drivers/power/supply/qcom/schgm-flash.c
-
-          # Safely inject SuSFS headers and KSU macros into namespace.c after standard linux includes
-          sed -i '/#include <linux\/fs.h>/a #include <linux\/susfs.h>\n#ifndef CL_COPY_MNT_NS\n#define CL_COPY_MNT_NS (1<<23)\n#endif\n#ifndef VFSMOUNT_MNT_FLAGS_KSU_UNSHARED_MNT\n#define VFSMOUNT_MNT_FLAGS_KSU_UNSHARED_MNT 0x2000000\n#endif' fs/namespace.c
+          sed -i '1i #include "smb5-lib.h"' drivers/power/supply/qcom/schgm-flash.c
 
       - name: 🧰 Patch Kernel of Re:Kernel
         uses: ./.github/workflows/patch-rekernel
