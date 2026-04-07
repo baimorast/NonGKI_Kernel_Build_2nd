@@ -158,6 +158,11 @@ jobs:
             sed -i 's/SECCOMP_ARCH_NATIVE_NR/512/g' drivers/kernelsu/infra/seccomp_cache.c
           fi
 
+          # 5. 修复 su_mount_ns.c 的头文件引入问题 (4.19 没有 uapi/linux/mount.h)
+          if [ -f "drivers/kernelsu/infra/su_mount_ns.c" ]; then
+            sed -i 's/<uapi\/linux\/mount.h>/<linux\/mount.h>/g' drivers/kernelsu/infra/su_mount_ns.c
+          fi
+
       - name: 🚀 Build Process
         uses: ./.github/workflows/build-process
 
