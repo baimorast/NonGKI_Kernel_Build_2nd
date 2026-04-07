@@ -123,8 +123,9 @@ jobs:
           sed -i '/hif_err("CE handle is null");/{n;s/return A_ERROR;/return QDF_STATUS_E_NULL_VALUE;/;}' drivers/staging/qca-wifi-host-cmn/hif/src/ce/ce_main.c
 
           # Fix QCOM schgm-flash incomplete definitions
+          # 修复: 必须先引入 <linux/power_supply.h> 再引入 "smb5-lib.h"，否则会报 incomplete type 错误
           sed -i '1i struct smb_charger;' drivers/power/supply/qcom/schgm-flash.h
-          sed -i '1i #include "smb5-lib.h"' drivers/power/supply/qcom/schgm-flash.c
+          sed -i '1i #include <linux/power_supply.h>\n#include "smb5-lib.h"' drivers/power/supply/qcom/schgm-flash.c
 
       - name: 🧰 Patch Kernel of Re:Kernel
         uses: ./.github/workflows/patch-rekernel
