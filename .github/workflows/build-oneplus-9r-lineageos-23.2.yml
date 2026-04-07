@@ -171,6 +171,14 @@ jobs:
             sed -i 's/\.handle_inode_event = ksu_handle_inode_event,/\.handle_event = ksu_dummy_handle_event,/g' drivers/kernelsu/manager/pkg_observer.c
           fi
 
+          # 7. 修复 allowlist.c 缺少头文件和 4.19 中 task_work_add 参数变动的问题
+          if [ -f "drivers/kernelsu/policy/allowlist.c" ]; then
+            # 添加依赖头文件
+            sed -i '2i #include <linux/sched/task.h>' drivers/kernelsu/policy/allowlist.c
+            # 兼容 4.19 task_work_add 参数
+            sed -i 's/TWA_RESUME/true/g' drivers/kernelsu/policy/allowlist.c
+          fi
+
       - name: 🚀 Build Process
         uses: ./.github/workflows/build-process
 
