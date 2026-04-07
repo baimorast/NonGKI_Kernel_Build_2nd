@@ -202,6 +202,11 @@ jobs:
             sed -i '2i #include <linux/sched/signal.h>\n#include <linux/sched/task.h>\n#include <linux/init_task.h>' drivers/kernelsu/supercall/dispatch.c
           fi
 
+          # 11. 修复 supercall.c 中 task_work_add 参数变动问题
+          if [ -f "drivers/kernelsu/supercall/supercall.c" ]; then
+            sed -i 's/TWA_RESUME/true/g' drivers/kernelsu/supercall/supercall.c
+          fi
+
       - name: 🚀 Build Process
         uses: ./.github/workflows/build-process
 
