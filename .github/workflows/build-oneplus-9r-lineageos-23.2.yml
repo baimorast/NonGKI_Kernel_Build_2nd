@@ -36,7 +36,7 @@ env:
   KERNELSU_AUTO_FORK : "resukisu" # xxksu, rsuntk, next, resukisu and sukisu
 
   SUSFS_ENABLE : true
-  SUSFS_FIXED : false
+  SUSFS_FIXED : true
 
   AK3_SOURCE : "https://github.com/osm0sis/AnyKernel3.git"
   AK3_BRANCH : "master"
@@ -130,55 +130,6 @@ jobs:
 
       - name: 🔧 Patch Hide Stuff
         uses: ./.github/workflows/patch-hide-stuff
-
-      - name: 🔎 Debug KernelSU and SuSFS config
-        run: |
-          cd $GITHUB_WORKSPACE/device_kernel
-
-          echo "========== Kernel Info =========="
-          echo "KERNEL_VERSION=${{ env.KERNEL_VERSION }}"
-          echo "KERNEL_ARCH=${{ env.KERNEL_ARCH }}"
-          echo "DEFCONFIG=arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}"
-          echo "KERNELSU_AUTO_GET=${{ env.KERNELSU_AUTO_GET }}"
-          echo "KERNELSU_AUTO_FORK=${{ env.KERNELSU_AUTO_FORK }}"
-          echo "KERNELSU_METHOD=${{ env.KERNELSU_METHOD }}"
-          echo "SUSFS_ENABLE=${{ env.SUSFS_ENABLE }}"
-          echo
-
-          echo "========== KernelSU tree =========="
-          ls -ld drivers/kernelsu || true
-          readlink -f drivers/kernelsu || true
-          echo
-
-          echo "========== drivers/Kconfig reference =========="
-          grep -n 'drivers/kernelsu/Kconfig' drivers/Kconfig || true
-          echo
-
-          echo "========== drivers/kernelsu/Kconfig matches =========="
-          grep -nE 'config KSU_SUSFS|config KSU_SUSFS_SUS_MOUNT|KSU_SUSFS_SUS_MOUNT' drivers/kernelsu/Kconfig || true
-          echo
-
-          echo "========== Full tree search =========="
-          grep -RsnE 'config KSU_SUSFS_SUS_MOUNT|CONFIG_KSU_SUSFS_SUS_MOUNT|config KSU_SUSFS' drivers/kernelsu fs include kernel 2>/dev/null || true
-          echo
-
-          echo "========== defconfig KSU/SUSFS entries =========="
-          grep -nE 'CONFIG_KSU|CONFIG_KSU_SUSFS' ./arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }} || true
-          echo
-
-          echo "========== namespace reject files =========="
-          find fs -maxdepth 2 \( -name 'namespace.c.rej' -o -name '*.rej' \) -print || true
-          echo
-
-          if [ -f fs/namespace.c.rej ]; then
-            echo "========== fs/namespace.c.rej =========="
-            cat fs/namespace.c.rej
-            echo
-          fi
-
-          echo "========== namespace.c susfs context =========="
-          grep -nC 3 'CONFIG_KSU_SUSFS_SUS_MOUNT' fs/namespace.c || true
-          echo
 
       - name: 🚀 Build Process
         uses: ./.github/workflows/build-process
