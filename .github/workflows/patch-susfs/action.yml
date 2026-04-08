@@ -43,30 +43,6 @@ runs:
             echo "CONFIG_THREAD_INFO_IN_TASK=y" >> ./arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}
           fi
 
-      - name: Debug SUSFS config before patch
-        if: env.SUSFS_ENABLE == 'true'
-        shell: bash
-        run: |
-          cd $GITHUB_WORKSPACE/device_kernel
-
-          DEFCONFIG_PATH="./arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}"
-
-          echo "========== SUSFS DEBUG: BEFORE PATCH =========="
-          echo "Kernel version: ${{ env.KERNEL_VERSION }}"
-          echo "Kernel arch: ${{ env.KERNEL_ARCH }}"
-          echo "Defconfig: $DEFCONFIG_PATH"
-          echo "KernelSU method: ${{ env.KERNELSU_METHOD }}"
-          echo "KernelSU auto fork: ${{ env.KERNELSU_AUTO_FORK }}"
-
-          echo "--- drivers/kernelsu/Kconfig matches ---"
-          grep -nE "KSU_SUSFS|SUS_MOUNT|OPEN_REDIRECT" drivers/kernelsu/Kconfig || true
-
-          echo "--- defconfig matches ---"
-          grep -nE "CONFIG_KSU|CONFIG_KSU_SUSFS" "$DEFCONFIG_PATH" || true
-
-          echo "--- namespace patch target matches before patch ---"
-          grep -n "CONFIG_KSU_SUSFS" fs/namespace.c || true
-
       - name: Patch SuSFS
         if: env.SUSFS_ENABLE == 'true'
         shell: bash
@@ -97,16 +73,6 @@ runs:
 
             patch -p1 < susfs_patch_to_${{ env.KERNEL_VERSION }}.patch || true
           fi
-
-          echo "========== SUSFS DEBUG: AFTER MAIN PATCH =========="
-          echo "--- drivers/kernelsu/Kconfig matches ---"
-          grep -nE "KSU_SUSFS|SUS_MOUNT|OPEN_REDIRECT" drivers/kernelsu/Kconfig || true
-
-          echo "--- patched files now referencing CONFIG_KSU_SUSFS_SUS_MOUNT ---"
-          grep -RIn "CONFIG_KSU_SUSFS_SUS_MOUNT" fs include drivers 2>/dev/null || true
-
-          echo "--- reject/orig files ---"
-          find . -type f \( -name "*.rej" -o -name "*.orig" \) -print || true
 
           # Patch .rej find
           if [[ "${{ env.BUILD_DEBUGGER }}" == "true" ]]; then
@@ -156,32 +122,6 @@ runs:
               echo "Patching successful!"
               echo "<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>"
             done
-          fi
-
-      - name: Debug SUSFS config after fixed patches
-        if: env.SUSFS_ENABLE == 'true' && env.SUSFS_SKIP != 'true'
-        shell: bash
-        run: |
-          cd $GITHUB_WORKSPACE/device_kernel/
-
-          DEFCONFIG_PATH="./arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}"
-
-          echo "========== SUSFS DEBUG: AFTER FIXED PATCHES =========="
-          echo "--- drivers/kernelsu/Kconfig matches ---"
-          grep -nE "KSU_SUSFS|SUS_MOUNT|OPEN_REDIRECT" drivers/kernelsu/Kconfig || true
-
-          echo "--- all Kconfig definitions mentioning SUSFS ---"
-          grep -RInE "^config KSU_SUSFS|^config KSU_SUSFS_" drivers fs include 2>/dev/null || true
-
-          echo "--- defconfig matches ---"
-          grep -nE "CONFIG_KSU|CONFIG_KSU_SUSFS" "$DEFCONFIG_PATH" || true
-
-          if [ -f .config ]; then
-            echo "--- final .config matches ---"
-            grep -nE "CONFIG_KSU|CONFIG_KSU_SUSFS" .config || true
-          else
-            echo "--- final .config matches ---"
-            echo ".config not generated yet at patch-susfs stage"
           fi
 
       - name: Upload Build Patch Rejected Files
