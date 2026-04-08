@@ -166,6 +166,20 @@ jobs:
           grep -nE 'CONFIG_KSU|CONFIG_KSU_SUSFS' ./arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }} || true
           echo
 
+          echo "========== namespace reject files =========="
+          find fs -maxdepth 2 \( -name 'namespace.c.rej' -o -name '*.rej' \) -print || true
+          echo
+
+          if [ -f fs/namespace.c.rej ]; then
+            echo "========== fs/namespace.c.rej =========="
+            cat fs/namespace.c.rej
+            echo
+          fi
+
+          echo "========== namespace.c susfs context =========="
+          grep -nC 3 'CONFIG_KSU_SUSFS_SUS_MOUNT' fs/namespace.c || true
+          echo
+
       - name: 🚀 Build Process
         uses: ./.github/workflows/build-process
 
