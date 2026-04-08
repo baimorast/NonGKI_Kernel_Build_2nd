@@ -1,4 +1,4 @@
-name: Build OnePlus 9R LineageOS 23.2 Kernel with SukiSU-Ultra and SuSFS
+name: Build OnePlus 9R LineageOS 23.2 Kernel with ReSukiSU and SuSFS
 
 on:
   workflow_call:
