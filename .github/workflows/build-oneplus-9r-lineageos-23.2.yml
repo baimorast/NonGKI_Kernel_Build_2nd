@@ -10,7 +10,7 @@ env:
   DEVICE_CODENAME : "lemonades"
 
   CUSTOM_CMDS : "CLANG_TRIPLE=aarch64-linux-gnu-"
-  EXTRA_CMDS : "LLVM=1 LLVM_IAS=1"
+  EXTRA_CMDS : "LLVM=1 LLVM_IAS=1 KCFLAGS=-Wno-implicit-enum-enum-cast"
 
   KERNEL_SOURCE : "https://github.com/LineageOS/android_kernel_oneplus_sm8250.git"
   KERNEL_BRANCH : "lineage-23.2"
@@ -120,9 +120,6 @@ jobs:
           # Only ${{ env.DEVICE_NAME }} use it.
           cd $GITHUB_WORKSPACE/device_kernel
           
-          # Clang 21 compatibility
-          sed -i '/hif_err("CE handle is null");/{n;s/return A_ERROR;/return QDF_STATUS_E_NULL_VALUE;/;}' drivers/staging/qca-wifi-host-cmn/hif/src/ce/ce_main.c
-
       - name: 🧰 Patch Kernel of Re:Kernel
         uses: ./.github/workflows/patch-rekernel
 
