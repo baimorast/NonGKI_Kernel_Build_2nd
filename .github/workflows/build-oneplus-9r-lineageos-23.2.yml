@@ -1,4 +1,4 @@
-name: Build OnePlus 9R LineageOS 23.2 Kernel with ReSukiSU and SuSFS
+name: Build OnePlus 9R LineageOS 23.2 Kernel with SukiSU-Ultra and SuSFS
 
 on:
   workflow_call:
@@ -56,11 +56,11 @@ env:
 
   KERNELSU_METHOD: "shell" # shell, manual and only.
 
-  PATCHES_SOURCE: "baimorast/NonGKI_Kernel_Patches" # [your_name]/[your_patch] -> gooder123/NonGKI_Patcher
-  PATCHES_BRANCH: "op_kernel" # [your_branch] -> main
+  PATCHES_SOURCE: "" # [your_name]/[your_patch] -> gooder123/NonGKI_Patcher
+  PATCHES_BRANCH: "" # [your_branch] -> main
 
   SUSFS_FOLDER_FIXED: "" # Fill in your patch prefix directory here. Leave it blank if there isn't one. -> your_folder
-  SUSFS_PATCH_FIXED: "fix_susfs_lineageos" # Fill in your patches here. If there are multiple patches, please separate them with a comma. Leave it blank if there isn't one. -> patch1,patch2
+  SUSFS_PATCH_FIXED: "" # Fill in your patches here. If there are multiple patches, please separate them with a comma. Leave it blank if there isn't one. -> patch1,patch2
 
   REKERNEL_ENABLE: "false" # if u need Re:Kernel.
 
@@ -119,7 +119,8 @@ jobs:
         run: |
           # Only ${{ env.DEVICE_NAME }} use it.
           cd $GITHUB_WORKSPACE/device_kernel
-
+          
+          # Nothing
 
       - name: 🧰 Patch Kernel of Re:Kernel
         uses: ./.github/workflows/patch-rekernel
@@ -129,6 +130,41 @@ jobs:
 
       - name: 🔧 Patch Hide Stuff
         uses: ./.github/workflows/patch-hide-stuff
+
+      - name: 🔎 Debug KernelSU and SuSFS config
+        run: |
+          cd $GITHUB_WORKSPACE/device_kernel
+
+          echo "========== Kernel Info =========="
+          echo "KERNEL_VERSION=${{ env.KERNEL_VERSION }}"
+          echo "KERNEL_ARCH=${{ env.KERNEL_ARCH }}"
+          echo "DEFCONFIG=arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}"
+          echo "KERNELSU_AUTO_GET=${{ env.KERNELSU_AUTO_GET }}"
+          echo "KERNELSU_AUTO_FORK=${{ env.KERNELSU_AUTO_FORK }}"
+          echo "KERNELSU_METHOD=${{ env.KERNELSU_METHOD }}"
+          echo "SUSFS_ENABLE=${{ env.SUSFS_ENABLE }}"
+          echo
+
+          echo "========== KernelSU tree =========="
+          ls -ld drivers/kernelsu || true
+          readlink -f drivers/kernelsu || true
+          echo
+
+          echo "========== drivers/Kconfig reference =========="
+          grep -n 'drivers/kernelsu/Kconfig' drivers/Kconfig || true
+          echo
+
+          echo "========== drivers/kernelsu/Kconfig matches =========="
+          grep -nE 'config KSU_SUSFS|config KSU_SUSFS_SUS_MOUNT|KSU_SUSFS_SUS_MOUNT' drivers/kernelsu/Kconfig || true
+          echo
+
+          echo "========== Full tree search =========="
+          grep -RsnE 'config KSU_SUSFS_SUS_MOUNT|CONFIG_KSU_SUSFS_SUS_MOUNT|config KSU_SUSFS' drivers/kernelsu fs include kernel 2>/dev/null || true
+          echo
+
+          echo "========== defconfig KSU/SUSFS entries =========="
+          grep -nE 'CONFIG_KSU|CONFIG_KSU_SUSFS' ./arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }} || true
+          echo
 
       - name: 🚀 Build Process
         uses: ./.github/workflows/build-process
